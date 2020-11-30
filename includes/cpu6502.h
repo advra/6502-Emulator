@@ -3,22 +3,9 @@
 #include "bus.h"
 
 class CPU6502{
-    public:
-        CPU6502();
-        ~CPU6502();
-
-        void ConnectBus(Bus *b) {bus = b;}
-        uint8_t read (uint64_t addr);
-        void write (uint64_t addr, uint8_t data);
-        uint8_t getFlag();
-        void setFlag();
-
-    private:
-        Bus *bus = nullptr;
-
+    
         // registers http://www.obelisk.me.uk/6502/registers.html
-
-        struct Register{
+        typedef struct Register{
             uint8_t PC;                 // program counter
             uint8_t SP;                 // stack pointer
             uint8_t A;                  // Accumulator     
@@ -35,7 +22,31 @@ class CPU6502{
                     uint8_t V : 1;      // Overflow
                     uint8_t N : 1;      // Negative
                 }Flags;
-                uint8_t status;
+                uint8_t buf;
             }Status;
         };
+
+    public:
+        CPU6502();
+        ~CPU6502();
+
+        void ConnectBus(Bus *b) {bus = b;}
+        uint8_t read (uint64_t addr);
+        void write (uint64_t addr, uint8_t data);
+        uint8_t getFlag();
+        void setFlag();
+
+        // Addressing Modes http://www.obelisk.me.uk/6502/addressing.html
+
+        // opcodes http://wiki.nesdev.com/w/index.php/CPU_unofficial_opcodes
+
+        // clock
+        void clock();
+        void reset();
+        void irq();     
+        void nmi();                     // non-maskable interrupts
+
+    private:
+        Bus *bus = nullptr;
+        Register registers;
 };
