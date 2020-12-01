@@ -1,5 +1,5 @@
-#include "bus.h"
-#include "cpu6502.h"
+#include "bus.hpp"
+#include "cpu6502.hpp"
 
 int main(int argc, char** argv){
     Bus bus;

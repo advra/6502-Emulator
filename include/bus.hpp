@@ -1,6 +1,6 @@
 #pragma once
 
-#include "cpu6502.h"
+#include "cpu6502.hpp"
 #include "common.hpp"
 #include <cstdint>
 #include <array>

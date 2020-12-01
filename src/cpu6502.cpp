@@ -1,5 +1,5 @@
-#include "cpu6502.h"
-#include "bus.h"
+#include "cpu6502.hpp"
+#include "bus.hpp"
 
 CPU6502::CPU6502(){ }
 
@@ -14,10 +14,11 @@ void CPU6502::write(u64 addr, u8 data){
 }
 
 void CPU6502::reset(){
-    registers.PC = 0xFFFC;
-    registers.SP = 0x00;
+    address_abs = 0xFFFC;
+    registers.SP = 0xFD;
     registers.A = registers.X = registers.Y = 0;
-    registers.Status.buffer = 0x00;
+    registers.Status.buffer = 0x00 | FLAG::U;
+    cycles = 0;
 }
 
 u8 CPU6502::getFlag(FLAG f){
