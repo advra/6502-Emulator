@@ -5,11 +5,11 @@ CPU6502::CPU6502(){ }
 
 CPU6502::~CPU6502() { }
 
-uint8_t CPU6502::read(uint64_t addr){
+u8 CPU6502::read(u64 addr){
     return bus->read(addr);
 }
 
-void CPU6502::write(uint64_t addr, uint8_t data){
+void CPU6502::write(u64 addr, u8 data){
     bus->write(addr, data);
 }
 
@@ -20,7 +20,7 @@ void CPU6502::reset(){
     registers.Status.buffer = 0x00;
 }
 
-uint8_t CPU6502::getFlag(FLAG f){
+u8 CPU6502::getFlag(FLAG f){
     return 0x00;
 }
 

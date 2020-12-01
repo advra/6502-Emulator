@@ -1,6 +1,7 @@
 #pragma once
 
 #include "cpu6502.h"
+#include "common.hpp"
 #include <cstdint>
 #include <array>
 
@@ -11,8 +12,8 @@ class Bus{
 
         // devices on bus
         CPU6502 cpu;
-        std::array<uint8_t, 64 * 1024> ram; 
+        std::array<u8, 64 * SIZES::KB> ram; 
 
-        void write(uint16_t addr, uint8_t data);
-        uint8_t read(uint16_t addr, bool readOnly = false);
+        void write(u16 addr, u8 data);
+        u8 read(u16 addr, bool readOnly = false);
 };

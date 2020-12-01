@@ -8,13 +8,13 @@ Bus::Bus(){
 
 Bus::~Bus(){}
 
-void Bus::write(uint16_t addr, uint8_t data){
+void Bus::write(u16 addr, u8 data){
     if(addr >= 0x000 && addr <= 0xFFFF){
         ram[addr] = data;
     }
 }
 
-uint8_t Bus::read(uint16_t addr, bool readOnly){
+u8 Bus::read(u16 addr, bool readOnly){
     if(addr >= 0x000 && addr <= 0xFFFF){
         return ram[addr];
     }
