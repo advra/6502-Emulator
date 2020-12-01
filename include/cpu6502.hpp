@@ -12,16 +12,7 @@ class CPU6502{
         CPU6502();
         ~CPU6502();
 
-        enum FLAG{
-            C = (1<<0),
-            Z = (1<<1),
-            I = (1<<2),
-            D = (1<<3),
-            B = (1<<4),
-            U = (1<<5),
-            V = (1<<6),
-            N = (1<<7),
-        };
+        enum FLAG{C,Z,I,D,B,U,V,N};
 
         // registers http://www.obelisk.me.uk/6502/registers.html
         struct Register{
@@ -49,7 +40,6 @@ class CPU6502{
         void ConnectBus(Bus *b) {bus = b;}
         u8 read (uint64_t addr);
         void write (u64 addr, u8 data);
-      
 
         // Addressing Modes 
         // https://wiki.nesdev.com/w/index.php/CPU_addressing_modes http://www.obelisk.me.uk/6502/addressing.html 
@@ -63,16 +53,17 @@ class CPU6502{
         // opcodes http://www.obelisk.me.uk/6502/instructions.html
         // LDA();
 
-        u8 UOF(); // unofficial opcodes that we do not implement http://wiki.nesdev.com/w/index.php/CPU_unofficial_opcodes
+        u8 UOP(); // unofficial opcodes that we do not implement http://wiki.nesdev.com/w/index.php/CPU_unofficial_opcodes
 
         void clock();
         // inputs
         void reset();
         void irq();         
-        void nmi();         // non-maskable interrupts 
+        void nmi();       
 
         u8 fetch();
         u8 fetched = 0x00;
+        u16 address_rel = 0x0000;
         u16 address_abs = 0x0000;
         u8 cycles = 0;
 

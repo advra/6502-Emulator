@@ -18,13 +18,18 @@ void CPU6502::reset(){
     registers.SP = 0xFD;
     registers.A = registers.X = registers.Y = 0;
     registers.Status.buffer = 0x00 | FLAG::U;
-    cycles = 0;
+    // clear internal helper vars
+    address_rel = address_abs = 0x0000;
+    fetched = 0x00;
+    // reset takes time
+    cycles = 8;
 }
 
 u8 CPU6502::getFlag(FLAG f){
-    return registers.Status.buffer & f;
+    return registers.Status.buffer & (1 << f);
 }
 
 void CPU6502::setFlag(FLAG f, bool v){
-    registers.Status.buffer | f;
+    if(v==1) registers.Status.buffer |= (1 << f);
+    registers.Status.buffer &= ~(1 << f);
 }
