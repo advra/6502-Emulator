@@ -10,7 +10,7 @@ class Bus{
         ~Bus();
 
         // devices on bus
-        // CPU6502 cpu;
+        CPU6502 cpu;
         std::array<uint8_t, 64 * 1024> ram; 
 
         void write(uint16_t addr, uint8_t data);
