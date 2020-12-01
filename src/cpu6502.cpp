@@ -22,9 +22,9 @@ void CPU6502::reset(){
 }
 
 u8 CPU6502::getFlag(FLAG f){
-    return 0x00;
+    return registers.Status.buffer & f;
 }
 
 void CPU6502::setFlag(FLAG f, bool v){
-    // registers.Status.buffer
+    registers.Status.buffer | f;
 }
