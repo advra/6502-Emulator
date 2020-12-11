@@ -4,8 +4,7 @@ Motivation: The 6502 is used by various emulators including the CHIP8 and Game B
 
 ### Requirements:
 ```
-- CMake
-- gcc
+// tbd
 ```
 
 ### To Do:
