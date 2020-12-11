@@ -1,6 +1,6 @@
 ## 6502 CPU Emulator
 
-Motivation: The 6502 is used by various emulators including the CHIP8 and Game Boy. This project serves to explore project organization, cross-platform compatible-code and understanding the chip's implementation. (And an excuse to delve as an intro to audio processing in the future)
+Motivation: The 6502 is used by various emulators including the CHIP8, SNES and Game Boy. This project serves for code organization, cross-platform compatiblility and chip implementation. (Also an excuse to jump into DSP for audio)
 
 ### Requirements:
 ```
