@@ -1,6 +1,7 @@
 #include "cpu6502.hpp"
 #include "bus.hpp"
 
+// lookup code matrix: Pg 10 of http://archive.6502.org/datasheets/rockwell_r650x_r651x.pdf 
 CPU6502::CPU6502(){ 
     using a = CPU6502;
     lookup = 
