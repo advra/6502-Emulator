@@ -1,11 +1,10 @@
 ## 6502 CPU Emulator
 
-Motivation: The 6502 is used by various emulators including the CHIP8 and Game Boy. This project serves to explore project organization, cross-platform compatible-code and understanding the chip's implementation. (And an excuse to delve as an intro to audio processing in the future)
+Motivation: The 6502 is used by various emulators including the CHIP8, SNES and Game Boy. This project serves for code organization, cross-platform compatiblility and chip implementation. (Also an excuse to jump into DSP for audio)
 
 ### Requirements:
 ```
-- CMake
-- gcc
+// tbd
 ```
 
 ### To Do:
@@ -14,6 +13,4 @@ Motivation: The 6502 is used by various emulators including the CHIP8 and Game B
 - add diassembler with imgui 
 
 ### Resources:
-1. http://www.obelisk.me.uk/6502/reference.html
-1. http://www.obelisk.me.uk/6502/registers.html
-1. http://blog.alexanderdickson.com/javascript-nes-emulator-part-1
+1. Official 6502 Processor Doc: http://archive.6502.org/datasheets/rockwell_r650x_r651x.pdf
