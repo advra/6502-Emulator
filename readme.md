@@ -14,6 +14,4 @@ Motivation: The 6502 is used by various emulators including the CHIP8 and Game B
 - add diassembler with imgui 
 
 ### Resources:
-1. http://www.obelisk.me.uk/6502/reference.html
-1. http://www.obelisk.me.uk/6502/registers.html
-1. http://blog.alexanderdickson.com/javascript-nes-emulator-part-1
+1. Official 6502 Processor Doc: http://archive.6502.org/datasheets/rockwell_r650x_r651x.pdf
