@@ -2,7 +2,8 @@
 #include "bus.hpp"
 
 // lookup code matrix: Pg 10 of http://archive.6502.org/datasheets/rockwell_r650x_r651x.pdf 
-CPU6502::CPU6502(){ 
+CPU6502::CPU6502()
+{ 
     using a = CPU6502;
     lookup = 
 	{
@@ -27,35 +28,384 @@ CPU6502::CPU6502(){
 
 CPU6502::~CPU6502() { }
 
-u8 CPU6502::read(u64 addr){
+u8 CPU6502::read(u64 addr)
+{
     return bus->read(addr);
 }
 
-void CPU6502::write(u64 addr, u8 data){
+void CPU6502::write(u64 addr, u8 data)
+{
     bus->write(addr, data);
 }
+void CPU6502::reset()
+{
+	// Get address to set program counter to
+	address_abs = 0xFFFC;
+	uint16_t lo = read(address_abs + 0);
+	uint16_t hi = read(address_abs + 1);
 
-void CPU6502::reset(){
-    address_abs = 0xFFFC;
-    registers.SP = 0xFD;
-    registers.A = registers.X = registers.Y = 0;
-    registers.Status.buffer = 0x00 | FLAG::U;
-    // clear internal helper vars
-    address_rel = address_abs = 0x0000;
-    fetched = 0x00;
-    // reset takes time
-    cycles = 8;
+	// Set it
+	registers.PC = (hi << 8) | lo;
+
+	// Reset internal registers
+	registers.A = 0;
+	registers.X = 0;
+	registers.Y = 0;
+	registers.SP = 0xFD;
+	registers.Status.buffer = 0x00 | FLAG::U;
+
+	// Clear internal helper variables
+	address_rel = 0x0000;
+	address_abs = 0x0000;
+	fetched = 0x00;
+
+	// Reset takes time
+	cycles = 8;
 }
 
-u8 CPU6502::getFlag(FLAG f){ 
+u8 CPU6502::getFlag(FLAG f)
+{ 
     return registers.Status.buffer & (1 << f); 
 }
 
-void CPU6502::setFlag(FLAG f, bool v){
-    if(v){
+void CPU6502::setFlag(FLAG f, bool v)
+{
+    if(v)
         registers.Status.buffer |= (1 << f);
-    }
-    else{ 
+    else
         registers.Status.buffer &= ~(1 << f);
+}
+
+void CPU6502::clock()
+{
+    if(cycles == 0)
+    {
+        opcode = read(registers.PC);
+        registers.PC++;
+
+        cycles = lookup[opcode].cycles;
+        u8 additional_cycle1 = (this->*lookup[opcode].addressingMode) ();
+        u8 additional_cycle2 = (this->*lookup[opcode].operation) ();
+
+        cycles += (additional_cycle1 & additional_cycle2);
     }
 }
+
+// Addressing Modes
+u8 CPU6502::IMP()
+{
+    fetched = registers.A;
+    return 0;
+}
+
+u8 CPU6502::IMM()
+{
+    address_abs = registers.PC++;
+    return 0;
+}
+
+u8 CPU6502::ZP0()
+{
+    address_abs = read(registers.PC);
+    registers.PC++;
+    address_abs &= 0x00FF;
+    return 0;
+}
+
+u8 CPU6502::ZPX()
+{
+    address_abs = (read(registers.PC) + registers.X);
+    registers.PC++;
+    address_abs &= 0x00FF;
+    return 0;
+}
+
+u8 CPU6502::ZPY()
+{
+    address_abs = (read(registers.PC) + registers.Y);
+    registers.PC++;
+    address_abs &= 0x00FF;
+    return 0;
+}
+
+u8 CPU6502::ABS()
+{
+    u16 lo = read(registers.PC);
+    registers.PC++;
+    u16 hi = read(registers.PC);
+    registers.PC++;
+
+    address_abs = (hi << 8) | lo;
+    return 0;
+}
+
+u8 CPU6502::ABX()
+{
+    u16 lo = read(registers.PC);
+    registers.PC++;
+    u16 hi = read(registers.PC);
+    registers.PC++;
+
+    address_abs = (hi << 8) | lo;
+    address_abs += registers.X;
+
+    // overflow check, change page
+    if((address_abs & 0xFF00) != (hi << 8))
+        return 1;
+    else 
+        return 0;
+}
+
+u8 CPU6502::ABY()
+{
+    u16 lo = read(registers.PC);
+    registers.PC++;
+    u16 hi = read(registers.PC);
+    registers.PC++;
+
+    address_abs = (hi << 8) | lo;
+    address_abs += registers.Y;
+
+    // overflow check, change page
+    if((address_abs & 0xFF00) != (hi << 8))
+        return 1;
+    else 
+        return 0;
+}
+
+u8 CPU6502::IND()
+{
+    u16 ptr_lo = read(registers.PC);
+    registers.PC++;
+    u16 ptr_hi = read(registers.PC);
+    registers.PC++;
+
+    u16 ptr =(ptr_hi << 8) | ptr_lo;
+    address_abs = (read(ptr + 1) << 8 | read(ptr + 0));
+
+    return 0;
+}
+
+u8 CPU6502::IZX()
+{
+    u16 t = read(registers.PC);
+    registers.PC++;
+
+    u16 lo = read((u16)(t + (u16) registers.X) & 0x00FF);
+    u16 hi = read((u16)(t + (u16) registers.X + 1) & 0x00FF);
+
+    address_abs = (hi << 8) | lo;
+
+    return 0;
+}
+
+u8 CPU6502::IZY()
+{
+    u16 t = read(registers.PC);
+    registers.PC++;
+
+    u16 lo = read(t & 0x00FF);
+    u16 hi = read((t+1) & 0x00FF);
+
+    address_abs = (hi << 8) | lo;
+    address_abs += registers.Y;
+
+    if((address_abs & 0xFF00) != (hi << 8))
+        return 1;
+    else
+        return 0;
+}
+
+u8 CPU6502::REL()
+{
+    address_rel = read(registers.PC);
+    registers.PC++;
+
+    if(address_rel & 0x80)
+        address_rel |= 0xFF00;
+    return 0;
+}
+
+// instructions
+u8 CPU6502::fetch()
+{
+    if(!(lookup[opcode].addressingMode == &CPU6502::IMP))
+        fetched = read(address_abs);
+    return fetched;
+}
+
+u8 CPU6502::AND()
+{
+    fetch();
+    registers.A &= fetched;
+    setFlag(FLAG::Z, registers.A == 0x00);
+    setFlag(FLAG::N, registers.A == 0x80);
+    return 1;
+}
+
+u8 CPU6502::BCS()
+{
+    if(getFlag(C) == 1)
+    {
+        cycles++;
+        address_abs = registers.PC + address_rel;
+
+        // if branch needs to cross page boundary
+        if((address_abs & 0xFF00) != (registers.PC & 0xFF00)) cycles++;
+
+        registers.PC = address_abs;
+    }   
+
+    return 0;
+}
+
+u8 CPU6502::BCC()
+{
+    if(getFlag(C) == 0)
+    {
+        cycles++;
+        address_abs = registers.PC + address_rel;
+
+        // if branch needs to cross page boundary
+        if((address_abs & 0xFF00) != (registers.PC & 0xFF00)) cycles++;
+
+        registers.PC = address_abs;
+    }   
+
+    return 0;
+}
+
+u8 CPU6502::BEQ()
+{
+    if(getFlag(Z) == 0)
+    {
+        cycles++;
+        address_abs = registers.PC + address_rel;
+
+        // if branch needs to cross page boundary
+        if((address_abs & 0xFF00) != (registers.PC & 0xFF00)) cycles++;
+
+        registers.PC = address_abs;
+    }   
+
+    return 0;
+}
+
+u8 CPU6502::BMI()
+{
+    if(getFlag(N) == 0)
+    {
+        cycles++;
+        address_abs = registers.PC + address_rel;
+
+        // if branch needs to cross page boundary
+        if((address_abs & 0xFF00) != (registers.PC & 0xFF00)) cycles++;
+
+        registers.PC = address_abs;
+    }   
+
+    return 0;
+}
+
+u8 CPU6502::BNE()
+{
+    if(getFlag(Z) == 0)
+    {
+        cycles++;
+        address_abs = registers.PC + address_rel;
+
+        // if branch needs to cross page boundary
+        if((address_abs & 0xFF00) != (registers.PC & 0xFF00)) cycles++;
+
+        registers.PC = address_abs;
+    }   
+
+    return 0;
+}
+
+u8 CPU6502::BPL()
+{
+    if(getFlag(N) == 0)
+    {
+        cycles++;
+        address_abs = registers.PC + address_rel;
+
+        // if branch needs to cross page boundary
+        if((address_abs & 0xFF00) != (registers.PC & 0xFF00)) cycles++;
+
+        registers.PC = address_abs;
+    }   
+
+    return 0;
+}
+
+u8 CPU6502::BVC()
+{
+    if(getFlag(V) == 0)
+    {
+        cycles++;
+        address_abs = registers.PC + address_rel;
+
+        // if branch needs to cross page boundary
+        if((address_abs & 0xFF00) != (registers.PC & 0xFF00)) cycles++;
+
+        registers.PC = address_abs;
+    }   
+
+    return 0;
+}
+
+u8 CPU6502::BVS()
+{
+    if(getFlag(V) == 1)
+    {
+        cycles++;
+        address_abs = registers.PC + address_rel;
+
+        // if branch needs to cross page boundary
+        if((address_abs & 0xFF00) != (registers.PC & 0xFF00)) cycles++;
+
+        registers.PC = address_abs;
+    }   
+
+    return 0;
+}
+
+u8 CPU6502::CLC()
+{
+    setFlag(C, false);
+    return 0;
+}
+
+u8 CPU6502::CLD()
+{
+    setFlag(D, false);
+    return 0;
+}
+
+u8 CPU6502::ADC()
+{
+    fetch();
+    u16 temp = (u16) registers.A + (u16) fetched + (u16) getFlag(FLAG::C);
+    setFlag(FLAG::C, temp > 255);
+    setFlag(FLAG::Z, (temp & 0x00FF) == 0);
+    setFlag(FLAG::N, temp > 0x80);
+    setFlag(FLAG::V, (~((uint16_t)registers.A ^ (uint16_t)fetched) & ((uint16_t)registers.A ^ (uint16_t)temp)) & 0x0080);
+    registers.A = temp & 0x00FF;
+    return 1;
+}
+
+u8 CPU6502::SBC()
+{
+	fetch();
+	uint16_t value = ((uint16_t)fetched) ^ 0x00FF;
+	
+    u16 temp = (u16) registers.A + (u16) fetched + (u16) getFlag(FLAG::C);
+    setFlag(FLAG::C, temp > 255);
+    setFlag(FLAG::Z, (temp & 0x00FF) == 0);
+    setFlag(FLAG::N, temp > 0x80);
+    setFlag(FLAG::V, (~((uint16_t)registers.A ^ (uint16_t)fetched) & ((uint16_t)registers.A ^ (uint16_t)temp)) & 0x0080);
+    registers.A = temp & 0x00FF;
+    return 1;
+}
+

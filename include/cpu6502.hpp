@@ -11,6 +11,7 @@
 
 #include <cstdint>
 #include <vector>
+#include <string>
 #include "common.hpp"
 
 class Bus;
@@ -97,6 +98,7 @@ class CPU6502{
         
         u16 address_rel = 0x0000;
         u16 address_abs = 0x0000;
+        u8 opcode = 0x00;
         u8 cycles = 0;
 
         struct INSTRUCTION
